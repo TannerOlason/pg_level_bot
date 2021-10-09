@@ -1,7 +1,7 @@
 import pyautogui
-import pytesseract
+#import pytesseract
 import time
-import imagehash
+#import imagehash
 import os
 from PIL import Image
 from itertools import product
@@ -18,14 +18,21 @@ import random
 def loop():
     bbox = (-7,0,468,983)
     bbox2 = (450,0,916,983)
+    bbox3 = (-7,0,916,983)
     #gotchas(bbox)
     #gotchas(bbox2)
     #delete_items()
     #send_gifts()
-    open_gifts(bbox2,2)
+    #open_gifts(bbox,1)
+    #open_gifts(bbox2,2)
     #evolve_mons()
     #delete_mons()
     #swap_accounts(bbox,1)
+    img = ImageGrab.grab(bbox)
+    print(scan_for_evolve(img,4))
+    #string_search("",bbox3)
+    evolve_mons(bbox3)
+
 
 
 def gotchas(cage):
@@ -137,8 +144,216 @@ def open_gifts(cage,pos):
             break
     return
 
-def evolve_mons():
+def evolve_mons(bbox):
+    '''
+    f = open("evolve_list.txt","r")
+
+    not_ok = 1
+    while not_ok == 1:
+        pyautogui.moveTo(38-5+random.randrange(10),arrow_search_y-5+random.randrange(10))
+        pyautogui.click()
+        time.sleep(1)
+        img = ImageGrab.grab(bbox)
+        not_ok = check_if_ok(img)
+        time.sleep(0.5)
+    time.sleep(1)
+
+    pyperclip.copy(f.readline())
+    pyautogui.typewrite(pyperclip.paste(), interval=0.1)
+    print("paste happens here^^")
+    time.sleep(2)
+    '''
+
+
+    #moved to
+    string_search("",bbox)
+
+
+    for q in range(100):
+        sx = [80, 530]
+        sy = [334, 778]
+        for x in sx:
+            for y in sy:
+                pyautogui.moveTo(x-5+random.randrange(10),y-5+random.randrange(10))
+                pyautogui.click()
+                time.sleep(0.2)
+
+        print("loop: ",q)
+        time.sleep(1)
+        img = ImageGrab.grab(bbox)
+        for p in range(4):
+            evo_pos = scan_for_evolve(img,1)
+            if evo_pos != ():
+                pyautogui.moveTo(evo_pos)
+                pyautogui.click()
+            time.sleep(1)
+            img = ImageGrab.grab(bbox)
+
+        time.sleep(1)
+        img = ImageGrab.grab(bbox)
+        for p in range(4):
+            yes_pos = scan_for_evolve(img,2)
+            if yes_pos != ():
+                pyautogui.moveTo(yes_pos)
+                pyautogui.click()
+            time.sleep(1)
+            img = ImageGrab.grab(bbox)
+
+        time.sleep(20)
+        img = ImageGrab.grab(bbox)
+        for p in range(4):
+            checkmark_pos = scan_for_evolve(img,3)
+            if checkmark_pos != ():
+                pyautogui.moveTo(checkmark_pos)
+                pyautogui.click()
+            time.sleep(1)
+            img = ImageGrab.grab(bbox)
+
+    '''
+    time.sleep(2)
+    pkc = get_pcount(img)
+    while pkc == -1:
+        pyautogui.moveTo(81-5+random.randrange(10),355-5+random.randrange(10))
+        pyautogui.click()
+        time.sleep(2)
+        evo_pos = ()
+        evo_pos = scan_for_evolve(img,1)
+        print(evo_pos)
+        if evo_pos != ():
+            time.sleep(0.4)
+            pyautogui.moveTo(evo_pos)
+            pyautogui.click()
+            time.sleep(1)
+            img = ImageGrab.grab(bbox)
+            yes_pos = scan_for_evolve(img,2)
+            pyautogui.moveTo(yes_pos)
+            pyautogui.click()
+            time.sleep(24)
+            img = ImageGrab.grab(bbox)
+            checkmark_pos = scan_for_evolve(img,2)
+            pyautogui.moveTo(checkmark_pos)
+            pyautogui.click()
+            time.sleep(3)
+        else:
+            print("evo_pos: ")
+        img = ImageGrab.grab(bbox)
+        pkc = get_pcount(img)
+    print("last pokemon evolved")
+    '''
+
     return
+
+def string_search(st,bbox):
+    f = open("evolve_list.txt","r")
+    sx = [38, 490]
+    sy = [216, 650]
+
+    pyperclip.copy(f.readline())
+    for x in sx:
+        for y in sy:
+            img = ImageGrab.grab(bbox)
+            while scan_for_evolve(img,4) == ():
+                pyautogui.moveTo(x-5+random.randrange(10),y-5+random.randrange(10))
+                pyautogui.click()
+                time.sleep(1)
+                img = ImageGrab.grab(bbox)
+            pyautogui.typewrite(pyperclip.paste(), interval=0.1)
+            print("paste happens here^^")
+            time.sleep(1)
+            pyautogui.moveTo(scan_for_evolve(img,4))
+            pyautogui.click()
+            time.sleep(2)
+
+    return
+
+
+def check_if_ok(im):
+    if_ok = 1
+    im.save(r'screen.png')
+    time.sleep(1)
+    tm_rgb = cv2.imread('templates/ok2.png')
+    scrn_rgb = cv2.imread('screen.png')
+    tm_hsv = cv2.cvtColor(tm_rgb, cv2.COLOR_BGR2HSV)
+    scrn_hsv = cv2.cvtColor(scrn_rgb, cv2.COLOR_BGR2HSV)
+
+    w,h = tm_rgb.shape[:-1]
+    c_list = [(225,640)]
+
+    res = cv2.matchTemplate(scrn_hsv,tm_hsv,cv2.TM_CCOEFF_NORMED)
+    #res2 = cv2.matchTemplate(scrn_hsv,tm2_hsv,cv2.TM_CCOEFF_NORMED)
+
+    threshold = 0.60
+    loc = np.where( res >= threshold)
+    for pt in zip(*loc[::-1]):
+        if_ok = 0
+        print("ok found")
+
+    return if_ok
+
+def get_pcount(im):
+    pcount = -1
+
+    im.save(r'screen.png')
+    time.sleep(1)
+    tm_rgb = cv2.imread('templates/no_pokemon.png')
+    scrn_rgb = cv2.imread('screen.png')
+    tm_hsv = cv2.cvtColor(tm_rgb, cv2.COLOR_BGR2HSV)
+    scrn_hsv = cv2.cvtColor(scrn_rgb, cv2.COLOR_BGR2HSV)
+
+    w,h = tm_rgb.shape[:-1]
+    c_list = [(225,640)]
+
+    res = cv2.matchTemplate(scrn_hsv,tm_hsv,cv2.TM_CCOEFF_NORMED)
+
+    threshold = 0.9
+    loc = np.where( res >= threshold)
+    for pt in zip(*loc[::-1]):
+        pcount = 1
+
+    return pcount
+
+def scan_for_evolve(im,j):
+    im.save(r'screen.png')
+    time.sleep(1)
+    tm_rgb = cv2.imread('templates\EVOLVE.png')
+    tm2_rgb = cv2.imread('templates\yes2.png')
+    tm3_rgb = cv2.imread('templates\checkmark.png')
+    tm4_rgb = cv2.imread('templates\ok2.png')
+    scrn_rgb = cv2.imread('screen.png')
+    tm_hsv = cv2.cvtColor(tm_rgb, cv2.COLOR_BGR2HSV)
+    tm2_hsv = cv2.cvtColor(tm2_rgb, cv2.COLOR_BGR2HSV)
+    tm3_hsv = cv2.cvtColor(tm3_rgb, cv2.COLOR_BGR2HSV)
+    tm4_hsv = cv2.cvtColor(tm4_rgb, cv2.COLOR_BGR2HSV)
+    scrn_hsv = cv2.cvtColor(scrn_rgb, cv2.COLOR_BGR2HSV)
+
+    if j == 1:
+        w,h = tm_rgb.shape[:-1]
+    elif j == 2:
+        w,h = tm2_rgb.shape[:-1]
+    elif j == 3:
+        w,h = tm3_rgb.shape[:-1]
+    elif j == 4:
+        w,h = tm4_rgb.shape[:-1]
+
+    if j == 1:
+        res = cv2.matchTemplate(scrn_hsv,tm_hsv,cv2.TM_CCOEFF_NORMED)
+    elif j == 2:
+        res = cv2.matchTemplate(scrn_hsv,tm2_hsv,cv2.TM_CCOEFF_NORMED)
+    elif j == 3:
+        res = cv2.matchTemplate(scrn_hsv,tm3_hsv,cv2.TM_CCOEFF_NORMED)
+    elif j == 4:
+        res = cv2.matchTemplate(scrn_hsv,tm4_hsv,cv2.TM_CCOEFF_NORMED)
+
+    evolve_pos = ()
+    threshold = 0.70
+    loc = np.where( res >= threshold)
+    for pt in zip(*loc[::-1]):
+        cv2.rectangle(scrn_rgb,pt,(pt[0]+h,pt[1]+w),(0,255,255),2)
+        evolve_pos = (int(pt[0]+(h/2))-5+random.randrange(10),int(pt[1]+(w/2))-5+random.randrange(10))
+
+    return evolve_pos
+
+
 
 def delete_mons():
     return
@@ -326,3 +541,4 @@ def select_account(n):
         n = n - 1
     return
 loop()
+
