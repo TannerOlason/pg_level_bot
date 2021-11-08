@@ -21,9 +21,11 @@ logging.basicConfig(filename='log.log', level=logging.DEBUG,
 
 
 busy = False
+kill = False
 
 
 def first_thread(name):
+    global kill
     bbox = (-7, 0, 468, 983)
     bbox2 = (450, 0, 916, 983)
     bbox3 = (-7, 0, 916, 983)
@@ -33,7 +35,10 @@ def first_thread(name):
     # delete_items()
     i = 10
     while i < 15:
+        if kill == True:
+            return
         swap_accounts(bbox, i, 1)
+        gotchas(bbox,1)
         enter_friendlist(bbox, 1)
         open_gifts(bbox, 1)
         send_gifts(bbox, 1)
@@ -50,12 +55,16 @@ def first_thread(name):
 
 
 def second_thread(name):
+    global kill
     logging.info("second thread started")
     bbox3 = (-7, 0, 916, 983)
     bbox2 = (450, 0, 916, 983)
     j = 10
     while j < 15:
+        if kill == True:
+            return
         swap_accounts(bbox2, j, 2)
+        gotchas(bbox2,2)
         enter_friendlist(bbox2, 2)
         open_gifts(bbox2, 2)
         send_gifts(bbox2, 2)
@@ -63,6 +72,13 @@ def second_thread(name):
         j = j + 1
     # send_gifts(bbox2,2)
 
+def killing_thread(name):
+    global kill
+    logging.info("killing thread started")
+    while kill == False:
+        if keyboard.read_key("-"):
+            kill = True
+        time.sleep(1)
 
 def enter_friendlist(cage, pos):
     global busy
@@ -85,7 +101,7 @@ def enter_friendlist(cage, pos):
     busy = False
 
 
-def gotchas(cage, pos):
+def gotchas(cage,pos):
     logging.info("=======================")
     logging.info("== Activate Gotchas ===")
     logging.info("=======================")
@@ -97,51 +113,36 @@ def gotchas(cage, pos):
     scrn_rgb = screen_save(cage, pos)
     scrn_hsv = cv2.cvtColor(scrn_rgb, cv2.COLOR_BGR2HSV)
 
-    w, h = gotcha_on_rgb.shape[:-1]
-    res = cv2.matchTemplate(scrn_hsv, gotcha_on_hsv, cv2.TM_CCOEFF_NORMED)
-    threshold = 0.90
-    loc = np.where(res >= threshold)
-    for pt in zip(*loc[::-1]):
-        cv2.rectangle(scrn_rgb, pt, (pt[0]+h, pt[1]+w), (0, 255, 255), 2)
-        pos = (int(pt[0]+(h/2))-5+random.randrange(10),
-               int(pt[1]+(w/2))-5+random.randrange(10))
+    scrn_rgb = screen_save(cage, pos)
+    scrn_hsv = cv2.cvtColor(scrn_rgb, cv2.COLOR_BGR2HSV)
+    gotcha_on_img = img_detect(scrn_hsv,gotcha_on_hsv,0.9,cage)
+    if gotcha_on_img != ():
         logging.info("gotcha on found")
         return
 
     time.sleep(1)
-    gotcha_off = True
-    while gotcha_off == True:
-        im = ImageGrab.grab(cage)
-        im.save(r'screen.png')
+    gotcha_is_off = True
+    while gotcha_is_off == True:
         time.sleep(1)
         scrn_rgb = screen_save(cage, pos)
         scrn_hsv = cv2.cvtColor(scrn_rgb, cv2.COLOR_BGR2HSV)
-        w, h = gotcha_off_rgb.shape[:-1]
-        res = cv2.matchTemplate(scrn_hsv, gotcha_off_hsv, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.90
-        loc = np.where(res >= threshold)
-        for pt in zip(*loc[::-1]):
-            cv2.rectangle(scrn_rgb, pt, (pt[0]+h, pt[1]+w), (0, 255, 255), 2)
-            pos = (int(pt[0]+(h/2))-5+random.randrange(10),
-                   int(pt[1]+(w/2))-5+random.randrange(10))
-            pos2 = (int(pt[0]+(h/2))-100+random.randrange(10),
-                    int(pt[1]+(w/2))-5+random.randrange(10))
+        gotcha_off_img = img_detect(scrn_hsv,gotcha_off_hsv,0.9,cage)
+        if gotcha_off_img != ():
             logging.info("gotcha off found")
-            pyautogui.moveTo(pos)
+            gotcha_is_off == False
+            pyautogui.moveTo(gotcha_off_img)
             pyautogui.click()
-            pyautogui.moveTo(pos2)
             time.sleep(10)
             break
-        w, h = gotcha_on_rgb.shape[:-1]
-        res = cv2.matchTemplate(scrn_hsv, gotcha_on_hsv, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.90
-        loc = np.where(res >= threshold)
-        for pt in zip(*loc[::-1]):
-            cv2.rectangle(scrn_rgb, pt, (pt[0]+h, pt[1]+w), (0, 255, 255), 2)
-            pos = (int(pt[0]+(h/2))-5+random.randrange(10),
-                   int(pt[1]+(w/2))-5+random.randrange(10))
-            logging.info("gotcha on found")
-            return
+        gotcha_is_on = False
+        while gotcha_is_on == False:
+            scrn_rgb = screen_save(cage, pos)
+            scrn_hsv = cv2.cvtColor(scrn_rgb, cv2.COLOR_BGR2HSV)
+            gotcha_on_img = img_detect(scrn_hsv,gotcha_on_hsv,0.9,cage)
+            if gotcha_on_img != ():
+                logging.info("gotcha on found")
+                gotcha_is_on == True
+                return
 
     return
 
